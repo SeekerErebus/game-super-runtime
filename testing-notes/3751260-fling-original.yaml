@@ -1,0 +1,11 @@
+version: 1
+name: The Blood of Dawnwalker
+companions:
+  - name: FLiNG trainer
+    command: ['${HOME}/Games/Trainers/The Blood of Dawnwalker Trainer - FLiNG.exe']
+    working_dir: '${HOME}/Games/Trainers'
+    scope: game
+    proton: true
+    required: false
+    start_after_game: true
+    start_delay_ms: 0

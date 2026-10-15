@@ -43,6 +43,7 @@ pub struct Plan {
     pub warnings: Vec<String>,
     pub proton: Option<PathBuf>,
     pub prefix: Option<PathBuf>,
+    pub virtual_directories: Vec<crate::virtual_dirs::ResolvedDirectory>,
 }
 
 pub struct Expansion {
@@ -252,7 +253,7 @@ pub fn build(
     supplied: &[OsString],
 ) -> Result<Plan> {
     config.validate()?;
-    let expansion = Expansion::new(app_id, config_dir, &config.variables)?;
+    let mut expansion = Expansion::new(app_id, config_dir, &config.variables)?;
     let mut game = if supplied.is_empty() {
         expansion.argv(&config.command)?
     } else {
@@ -405,6 +406,13 @@ pub fn build(
             }
         }
     }
+    if let Some(prefix) = &prefix {
+        expansion
+            .builtin
+            .insert("PREFIX".into(), prefix.to_string_lossy().into());
+    }
+    let virtual_directories =
+        crate::virtual_dirs::resolve(&config.virtual_directories, &expansion)?;
     let overlays = &config.overlays;
     if overlays.mangohud {
         env.entry("MANGOHUD".into()).or_insert("1".into());
@@ -500,11 +508,20 @@ pub fn build(
                 }
             }
         }
+        let mut companion_env = BTreeMap::new();
+        if companion.host_environment {
+            companion_env.insert(
+                "LD_LIBRARY_PATH".into(),
+                env::var("SYSTEM_LD_LIBRARY_PATH").unwrap_or_default(),
+            );
+            companion_env.insert("LD_PRELOAD".into(), String::new());
+        }
+        companion_env.extend(expansion.env(&companion.env)?);
         companions.push(CompanionPlan {
             task: Task {
                 name: companion.name.clone(),
                 argv,
-                env: expansion.env(&companion.env)?,
+                env: companion_env,
                 cwd: companion
                     .working_dir
                     .as_ref()
@@ -577,6 +594,7 @@ pub fn build(
         warnings,
         proton,
         prefix,
+        virtual_directories,
     })
 }
 
@@ -635,6 +653,7 @@ impl Plan {
             "env": self.env, "unset_env": self.unset_env, "working_dir": self.cwd,
             "before": self.before.iter().map(task).collect::<Vec<_>>(), "after": self.after.iter().map(task).collect::<Vec<_>>(),
             "companions": self.companions.iter().map(|c| json!({"task": task(&c.task), "required": c.required, "start_delay_ms": c.start_delay_ms, "start_after_game": c.start_after_game, "ready_file": c.ready_file, "ready_timeout_ms": c.ready_timeout_ms})).collect::<Vec<_>>(),
+            "virtual_directories": self.virtual_directories,
             "shutdown_timeout_ms": self.shutdown_timeout_ms, "warnings": self.warnings,
             "note": "Argument arrays are executed literally. Environment values in this preview may be private; non-UTF-8 argv is displayed lossily."})
     }

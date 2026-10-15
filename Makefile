@@ -28,8 +28,8 @@ uninstall:
 	rm -f "$(DESTDIR)$(PREFIX)/share/man/man1/game-super-runtime.1"
 	rm -f "$(DESTDIR)$(PREFIX)/share/bash-completion/completions/game-super-runtime"
 	rm -f "$(DESTDIR)$(PREFIX)/share/doc/game-super-runtime/README.md"
-	for name in AI_GUIDE.md reference.md architecture.md packaging.md validation.md config.schema.json; do rm -f "$(DESTDIR)$(PREFIX)/share/doc/game-super-runtime/docs/$$name"; done
-	for name in defaults native 1091500 standalone-proton scripts wrappers; do rm -f "$(DESTDIR)$(PREFIX)/share/doc/game-super-runtime/examples/$$name.yaml"; done
+	for name in AI_GUIDE.md reference.md architecture.md packaging.md validation.md virtual-directories.md config.schema.json layers.schema.json; do rm -f "$(DESTDIR)$(PREFIX)/share/doc/game-super-runtime/docs/$$name"; done
+	for name in defaults native 1091500 standalone-proton scripts wrappers shared-app mod-overlay; do rm -f "$(DESTDIR)$(PREFIX)/share/doc/game-super-runtime/examples/$$name.yaml"; done
 
 dist:
 	bash tools/make-dist.sh

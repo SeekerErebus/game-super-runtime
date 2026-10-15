@@ -525,3 +525,64 @@ fn gui_api_validates_saves_and_rejects_cross_origin() {
     http(authority, &format!("{base}close"), "POST", token, "{}", "");
     assert_eq!(wait_bounded(&mut child), 0);
 }
+
+#[test]
+fn host_environment_restores_desktop_libraries_without_changing_game() {
+    let s = Sandbox::new();
+    s.config("version: 1\ncompanions:\n  - name: desktop\n    scope: host\n    host_environment: true\n    command: [/bin/bash, -c, 'printf \"%s|%s\" \"$LD_LIBRARY_PATH\" \"$LD_PRELOAD\" > \"$GSR_CONFIG_DIR/desktop\"; touch \"$GSR_CONFIG_DIR/ready\"; exec sleep 30']\n    ready_file: '${CONFIG_DIR}/ready'\nshutdown_timeout_ms: 100\n");
+    let o = s
+        .command()
+        .env("LD_LIBRARY_PATH", "/steam-test-libraries")
+        .env("SYSTEM_LD_LIBRARY_PATH", "/desktop-test-libraries")
+        .env("LD_PRELOAD", "")
+        .args([
+            "demo",
+            "/bin/bash",
+            "-c",
+            "printf '%s' \"$LD_LIBRARY_PATH\"",
+        ])
+        .output()
+        .unwrap();
+    success(&o);
+    assert_eq!(o.stdout, b"/steam-test-libraries");
+    assert_eq!(
+        fs::read_to_string(s.path("config/desktop")).unwrap(),
+        "/desktop-test-libraries|"
+    );
+}
+
+#[test]
+fn remaining_launch_group_is_killed_after_its_leader_exits() {
+    let s = Sandbox::new();
+    s.config("version: 1\nshutdown_timeout_ms: 100\n");
+    let script = s.script(
+        "orphan.bash",
+        "trap '' TERM; echo $$ > \"$1\"; while :; do sleep .1; done",
+    );
+    let launch = format!(
+        "'{}' '{}' >/dev/null 2>&1 & while [[ ! -f '{}' ]]; do sleep .01; done; exit 7",
+        script.display(),
+        s.path("child.pid").display(),
+        s.path("child.pid").display()
+    );
+    let o = s.run(&["demo", "/bin/bash", "-c", &launch]);
+    assert_eq!(o.status.code(), Some(7));
+    let pid = fs::read_to_string(s.path("child.pid"))
+        .unwrap()
+        .trim()
+        .parse::<i32>()
+        .unwrap();
+    let start = Instant::now();
+    loop {
+        // Orphans may remain zombies until the system's subreaper reaps them.
+        let stat = fs::read_to_string(format!("/proc/{pid}/stat")).unwrap_or_default();
+        if stat.is_empty() || stat.split(") ").nth(1).is_some_and(|v| v.starts_with('Z')) {
+            break;
+        }
+        assert!(
+            start.elapsed() < Duration::from_secs(3),
+            "surviving child {pid}"
+        );
+        thread::sleep(Duration::from_millis(20));
+    }
+}

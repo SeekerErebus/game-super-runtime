@@ -5,3 +5,5 @@ pub mod execute;
 pub mod gui;
 pub mod plan;
 pub mod storage;
+
+pub mod virtual_dirs;

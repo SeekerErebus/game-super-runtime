@@ -49,3 +49,37 @@ When a choice changes, mark the old entry superseded and reference its replaceme
 - Rationale: Stable behavior and reviewable plans are necessary for complex setups.
   Relative configuration paths resolve under config directory; argv words are literal
   except explicit documented substitutions. Supplied Steam argv is never expanded.
+
+### D-004 — Optional private mounts and persistent FUSE overlays
+
+- Date: 2026-10-15
+- Status: Accepted
+- Decision: 0.2 adds opt-in bubblewrap directory binds and foreground fuse-overlayfs
+  merges. Bubblewrap wraps the complete launch; original target trees are not
+  modified. Require existing targets rather than creating placeholders through a
+  writable root bind. Overlay writes persist in explicit upper/work storage.
+- Evidence: Real bind/FUSE tests passed precedence, copy-up, deletion persistence,
+  read-only/shared-writable semantics, signal cleanup, cross-app write locks,
+  setup rollback and virtual-only executable/cwd. Actual SteamLinuxRuntime_sniper
+  game/helper probes both saw the merged files; original content stayed unchanged.
+- Contract: Optional external manifest v1 (YAML/JSON), literal relative-to-manifest
+  paths, ordered enabled layers. Future adapters can emit it without a GSR update.
+- Dependencies: No new Rust crates or unconditional tools. bwrap for binds;
+  fuse-overlayfs/fusermount3/device access for overlays. No implicit root, global
+  AppArmor weakening, registry migration, or modification of live user profiles.
+- Limits: Existing external Wine services/detached processes may hold old mount
+  views; Windows app portability and Ubuntu/Flatpak policy remain manual coverage.
+  Overlay path delimiters/overlaps rejected. Crash recovery documented; no deletion
+  of user write storage or recursive removal of mount trees.
+
+### D-005 — Playtest follow-ups within existing lifecycle ownership
+
+- Date: 2026-10-15
+- Status: Accepted
+- Decision: Add opt-in companion host_environment for Steam-to-desktop library
+  restoration (explicit env still wins). TERM/grace/KILL remaining launch-group
+  members even after the direct child exits. Preserve original exit status.
+- Evidence: Playtest Kate loader failure and same-group gamescopereaper survival;
+  new process tests reproduce and validate these improvements.
+- Limits: Do not claim prefix-wide Windows cleanup or implement global wineserver
+  killing. Independent companion lifetime/provisioning remain separate features.

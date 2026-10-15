@@ -1,0 +1,17 @@
+# Steam supplies Proton and PREFIX. Initialize/create the target folders first.
+# Illustrative WeMod layout: verify actual paths; this does not migrate registry.
+version: 1
+virtual_directories:
+  - type: bind
+    source: '~/Games/Prefixes/WeMod/pfx/drive_c/users/steamuser/AppData/Local/WeMod'
+    target: '${PREFIX}/pfx/drive_c/users/steamuser/AppData/Local/WeMod'
+    read_only: true
+  - type: bind
+    source: '~/Games/Prefixes/WeMod/pfx/drive_c/users/steamuser/AppData/Roaming/WeMod'
+    target: '${PREFIX}/pfx/drive_c/users/steamuser/AppData/Roaming/WeMod'
+    read_only: false
+companions:
+  - name: Shared companion
+    proton: true
+    command: ['C:\users\steamuser\AppData\Local\WeMod\WeMod.exe']
+    start_after_game: true

@@ -79,3 +79,52 @@ or topic notes when an entry would otherwise become large.
 - The 1.8 GiB /tmp/gsr-runtime-probe test copy was removed; no test services remain.
 - Release binary, source tarball, local Arch recipe and GUI screenshot remain in
   target/. STATE.md records manual coverage limits and publication prerequisites.
+
+## 2026-10-15 — Version 0.2 virtual directories
+
+Preserved the new assignment verbatim in VIRTUAL_DIRECTORIES_BRIEF.md, updated
+BRIEF.md and recorded D-004/D-005. Read all testing-notes evidence without editing
+those user artifacts. Implemented optional bwrap binds + fuse-overlayfs merges,
+manifest v1, persistent write storage/locks, lifecycle/preflight/Steam exports,
+GUI controls, examples, schemas and user/developer documentation. Version 0.2.0.
+Also implemented the Kate desktop-library preset and same-group reaper cleanup
+observed in playtesting. No real game/profile/prefix edited; no commit or push.
+
+Evidence:
+- cargo fmt --all -- --check; cargo clippy --all-targets --locked --offline -- -D warnings: passed.
+- cargo test --locked --offline: 46 passed, 7 host-dependent tests ignored.
+- cargo test --locked --offline --test virtual_dirs -- --include-ignored: all 10
+  passed, including those 7. Total 53 distinct passing tests. Earlier aggregate
+  --include-ignored run passed all 51 then-existing tests; two added failure/safety
+  cases passed in the final virtual test run.
+- Actual FUSE/bwrap checks: precedence, recursive merge, persistent copy-up/deletion,
+  original preservation, read-only/shared-writable mappings, virtual executable/cwd,
+  duplicate write-dir lock, TERM cleanup, partial mount rollback, FUSE process
+  death causing launch shutdown, canonical alias overlaps/absent targets rejected.
+- GSR_TEST_VIRTUAL=1 bash tools/runtime-smoke.sh installed SteamLinuxRuntime_sniper/run:
+  passed again after final executor changes. Game/helper share pressure-vessel view
+  and see overlay data; base unchanged, session mount directories cleaned.
+- node tools/gui-smoke.mjs: passed form saves, virtual mappings, enable/reorder
+  preservation, bad YAML rejection, reload, mobile width, close; no JS exceptions.
+  Visually inspected target/qa/editor.png (Virtual directories tab).
+- cargo build --release --locked --offline: passed; target/release/game-super-runtime.
+- make install DESTDIR="$PWD/target/package-stage" PREFIX=/usr: passed; staged
+  executable reports 0.2.0. New guide/schemas/examples included.
+- bash tools/make-dist.sh: generated target/dist/game-super-runtime-0.2.0.tar.gz,
+  SHA256SUMS, PKGBUILD and .SRCINFO. makepkg --verifysource: checksum passed.
+- bash -n shell artifacts, both JSON schema syntax checks, git diff --check: passed.
+- Removed owned /tmp/gsr-runtime-probe scratch copy after checking no process used
+  it; no virtual-directory test mounts remain. Test/server processes completed.
+
+Investigation details/limits:
+- Host has bwrap 0.13.1 and usable FUSE; namespace probe passed without privilege.
+- Installed fuse-overlayfs prints 'unknown argument ignored: auto_unmount' despite
+  FUSE help mentioning it. Removed that option. Explicit owned-session unmount,
+  service death signal and documented crash recovery are used instead.
+- No actual WeMod/Windows app portability or modded commercial game tested; registry
+  and services are not imported. Existing target directories required. No claim
+  that mappings fix detached Wine launchers; no global wineserver killing.
+- Ubuntu official docs confirm namespace restrictions separate from FUSE support;
+  Ubuntu/Flatpak/Snap still need manual policy verification. Upstream links in guide.
+- Existing detached-daemon/Windows lifecycle and UMU provisioning limitations remain
+  explicit. Minimum Rust 1.85 and clean Arch chroot not retested on separate hosts.

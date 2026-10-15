@@ -23,6 +23,7 @@ pub struct Config {
     pub before: Vec<Action>,
     pub after: Vec<Action>,
     pub companions: Vec<Companion>,
+    pub virtual_directories: Vec<crate::virtual_dirs::Directory>,
     pub shutdown_timeout_ms: u64,
 }
 
@@ -45,6 +46,7 @@ impl Default for Config {
             before: vec![],
             after: vec![],
             companions: vec![],
+            virtual_directories: vec![],
             shutdown_timeout_ms: 3000,
         }
     }
@@ -144,6 +146,7 @@ pub struct Companion {
     pub working_dir: Option<String>,
     pub scope: Scope,
     pub proton: bool,
+    pub host_environment: bool,
     pub required: bool,
     pub start_delay_ms: u64,
     pub start_after_game: bool,
@@ -161,6 +164,7 @@ impl Default for Companion {
             working_dir: None,
             scope: Scope::Game,
             proton: false,
+            host_environment: false,
             required: false,
             start_delay_ms: 0,
             start_after_game: false,
@@ -247,6 +251,7 @@ impl Config {
             self.version
         );
         check_command(&self.command, "command", true)?;
+        crate::virtual_dirs::validate(&self.virtual_directories)?;
         check_env(&self.env, "env")?;
         check_env(&self.variables, "variables")?;
         ensure!(
@@ -322,6 +327,10 @@ impl Config {
                 &label,
             )?;
             check_env(&companion.env, &label)?;
+            ensure!(
+                !companion.host_environment || companion.scope == Scope::Host,
+                "{label}: host_environment requires scope: host"
+            );
             ensure!(
                 !companion.proton || companion.script.is_none(),
                 "{label}: proton requires a command, not a Bash script"

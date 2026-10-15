@@ -263,10 +263,35 @@ pub fn executable_exists(executable: &OsStr, cwd: Option<&Path>, path: Option<&O
     })
 }
 
+fn executable_in_view(plan: &Plan, exe: &OsStr, cwd: Option<&Path>, path: Option<&OsStr>) -> bool {
+    if plan.virtual_directories.is_empty() {
+        return executable_exists(exe, cwd, path);
+    }
+    let candidates = if exe.as_bytes().contains(&b'/') {
+        vec![cwd.unwrap_or(Path::new(".")).join(exe)]
+    } else {
+        let search = path
+            .map(OsStr::to_owned)
+            .or_else(|| std::env::var_os("PATH"))
+            .unwrap_or_else(|| "/usr/bin:/bin".into());
+        std::env::split_paths(&search)
+            .map(|p| cwd.unwrap_or(Path::new(".")).join(p).join(exe))
+            .collect()
+    };
+    candidates.iter().any(|p| {
+        crate::virtual_dirs::visible_paths(&plan.virtual_directories, p)
+            .iter()
+            .any(|p| executable_exists(p.as_os_str(), None, None))
+    })
+}
+
 pub fn preflight(plan: &Plan) -> Result<()> {
+    crate::virtual_dirs::preflight(&plan.virtual_directories)?;
     if let Some(cwd) = &plan.cwd {
         ensure!(
-            cwd.is_dir(),
+            crate::virtual_dirs::visible_paths(&plan.virtual_directories, cwd)
+                .iter()
+                .any(|p| p.is_dir()),
             "working_dir does not exist: {}",
             cwd.display()
         );
@@ -274,7 +299,7 @@ pub fn preflight(plan: &Plan) -> Result<()> {
     let path = plan.env.get("PATH").map(OsStr::new);
     let check = |exe: &OsStr, cwd: Option<&Path>, label: &str| -> Result<()> {
         ensure!(
-            executable_exists(exe, cwd.or(plan.cwd.as_deref()), path),
+            executable_in_view(plan, exe, cwd.or(plan.cwd.as_deref()), path),
             "{label}: executable {} is missing or not executable; install it or correct the configuration",
             exe.to_string_lossy()
         );
@@ -306,7 +331,8 @@ pub fn preflight(plan: &Plan) -> Result<()> {
         if plan.runtime.is_empty() || task.scope == Scope::Host {
             let task_path = task.env.get("PATH").map(OsStr::new).or(path);
             ensure!(
-                executable_exists(
+                executable_in_view(
+                    plan,
                     &task.argv[0],
                     task.cwd.as_deref().or(plan.cwd.as_deref()),
                     task_path
@@ -335,7 +361,34 @@ pub fn run(plan: &Plan, paths: &Paths, log: &mut Log) -> Result<i32> {
             storage::private_dir(prefix)?;
         }
     }
-    let argv = command(plan, &log.path)?;
+    let mut virtual_session =
+        crate::virtual_dirs::Session::prepare(&plan.virtual_directories, paths)?;
+    let mut argv = command(plan, &log.path)?;
+    if let Some(session) = &virtual_session {
+        let mut prefix = session.prefix.clone();
+        prefix.pop();
+        // bwrap itself uses host libraries; restore the launch environment inside it.
+        for key in ["LD_LIBRARY_PATH", "LD_PRELOAD"] {
+            let value = plan.env.get(key).map(OsString::from).or_else(|| {
+                if plan.unset_env.iter().any(|k| k == key) {
+                    None
+                } else {
+                    std::env::var_os(key)
+                }
+            });
+            if let Some(value) = value {
+                prefix.extend([OsString::from("--setenv"), key.into(), value]);
+            } else {
+                prefix.extend([OsString::from("--unsetenv"), key.into()]);
+            }
+        }
+        if let Some(cwd) = &plan.cwd {
+            prefix.extend([OsString::from("--chdir"), cwd.as_os_str().to_owned()]);
+        }
+        prefix.push("--".into());
+        argv = plan::wrap(&prefix, argv);
+        log.write("Virtual directories prepared; wrappers, runtime and companions share the private view.");
+    }
     log.write(&format!(
         "Starting app {} ({} companion(s), shared runtime: {}).",
         plan.app_id,
@@ -351,15 +404,58 @@ pub fn run(plan: &Plan, paths: &Paths, log: &mut Log) -> Result<i32> {
     for key in &plan.unset_env {
         cmd.env_remove(key);
     }
-    if let Some(cwd) = &plan.cwd {
-        cmd.current_dir(cwd);
+    if virtual_session.is_none() {
+        if let Some(cwd) = &plan.cwd {
+            cmd.current_dir(cwd);
+        }
+    }
+    if let Some(session) = &virtual_session {
+        let inherited = plan
+            .env
+            .get("PRESSURE_VESSEL_FILESYSTEMS_RW")
+            .cloned()
+            .or_else(|| {
+                if plan
+                    .unset_env
+                    .iter()
+                    .any(|k| k == "PRESSURE_VESSEL_FILESYSTEMS_RW")
+                {
+                    None
+                } else {
+                    std::env::var("PRESSURE_VESSEL_FILESYSTEMS_RW").ok()
+                }
+            })
+            .unwrap_or_default();
+        cmd.env(
+            "PRESSURE_VESSEL_FILESYSTEMS_RW",
+            session.exports(&inherited),
+        );
+        if let Some(path) = std::env::var_os("SYSTEM_LD_LIBRARY_PATH") {
+            cmd.env("LD_LIBRARY_PATH", path);
+        } else {
+            cmd.env_remove("LD_LIBRARY_PATH");
+        }
+        cmd.env_remove("LD_PRELOAD");
     }
     let mut child = cmd
         .spawn()
         .with_context(|| format!("cannot launch {}", argv[0].to_string_lossy()))?;
     let pid = child.id() as i32;
     let mut signal_sent = None;
+    let mut mount_error = None;
     let code = loop {
+        if mount_error.is_none() {
+            if let Some(session) = &mut virtual_session {
+                if let Err(error) = session.healthy() {
+                    log.write(&format!("Virtual directory failure: {error:#}"));
+                    mount_error = Some(error);
+                    unsafe {
+                        libc::kill(-pid, libc::SIGTERM);
+                    }
+                    signal_sent = Some(Instant::now());
+                }
+            }
+        }
         match child.try_wait() {
             Ok(Some(status)) => break exit_code(status),
             Ok(None) => {}
@@ -401,6 +497,25 @@ pub fn run(plan: &Plan, paths: &Paths, log: &mut Log) -> Result<i32> {
         }
         thread::sleep(Duration::from_millis(20));
     };
+    // A wrapper can exit while a descendant in its group ignores TERM.
+    // Keep the group bounded even after reaping the direct child.
+    if unsafe { libc::kill(-pid, 0) } == 0 {
+        log.write("Stopping remaining processes in the launch group.");
+        unsafe {
+            libc::kill(-pid, libc::SIGTERM);
+        }
+        let deadline = Instant::now() + Duration::from_millis(plan.shutdown_timeout_ms);
+        while Instant::now() < deadline && unsafe { libc::kill(-pid, 0) } == 0 {
+            thread::sleep(Duration::from_millis(20));
+        }
+        unsafe {
+            libc::kill(-pid, libc::SIGKILL);
+        }
+    }
+    drop(virtual_session);
+    if let Some(error) = mount_error {
+        return Err(error);
+    }
     let code = if received_signal() != 0 {
         128 + received_signal()
     } else {

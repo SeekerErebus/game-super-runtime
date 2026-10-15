@@ -1,0 +1,20 @@
+version: 1
+name: Pragmata
+command: ['${HOME}/Games/PRAGMATA/PRAGMATA.exe']
+working_dir: '${HOME}/Games/PRAGMATA'
+wrappers:
+  - [game-performance]
+env:
+  SteamAppId: '0'
+  SteamGameId: '0'
+  STEAM_COMPAT_APP_ID: '0'
+proton:
+  path: '${HOME}/.local/share/Steam/compatibilitytools.d/Proton-CachyOS Latest/proton'
+  prefix: '${HOME}/Games/Prefixes/Pragmata'
+  steam_root: '${HOME}/.local/share/Steam'
+runtime:
+  mode: required
+  command:
+    - '${HOME}/.local/share/Steam/steamapps/common/SteamLinuxRuntime_4/_v2-entry-point'
+    - --verb=run
+    - --

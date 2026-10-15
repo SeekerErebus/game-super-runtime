@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Game Super Runtime layer manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "layers"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "layers": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      }
+    }
+  }
+}

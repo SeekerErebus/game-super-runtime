@@ -84,6 +84,12 @@ Run `game-super-runtime my-game`, or put that in a desktop shortcut's `Exec=`.
 A supplied Steam/CLI command takes precedence. Steam session argv and env are
 not saved as a fallback because they can change between updates and sessions.
 For Steam-owned games needing Steam authentication/DRM, launch through Steam.
+Share an application folder across prefixes or merge ordered mods at launch using
+[virtual directories](docs/virtual-directories.md). Configure them in the GUI's
+Virtual directories tab or YAML. Bind mappings need bubblewrap; mod overlays also
+need fuse-overlayfs and FUSE 3. These tools remain optional for ordinary profiles.
+Examples: [shared application](examples/shared-app.yaml), [mod overlay](examples/mod-overlay.yaml).
+
 See [examples](examples/) for Proton, shared-container companions and scripts.
 
 ## Inspect and troubleshoot

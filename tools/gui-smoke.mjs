@@ -27,19 +27,23 @@ try {
   await until(()=>evaluate('document.getElementById("status")?.textContent.startsWith("Loaded.")'),'config loaded').catch(async e=>{console.error('Browser diagnostics:',errors,await evaluate('JSON.stringify({href:location.href,html:document.documentElement.outerHTML})'));throw e;});
   await evaluate('document.getElementById("name").value="Browser tested";document.getElementById("name").dispatchEvent(new Event("input",{bubbles:true}));document.querySelector("[data-tab=performance]").click();document.getElementById("mangohud").click();document.getElementById("save").click();');
   await until(()=>evaluate('document.getElementById("status").textContent.startsWith("Saved.")'),'save form');
-  const yaml=await readFile(join(root,'config/demo.yaml'),'utf8');assert.match(yaml,/name: Browser tested/);assert.match(yaml,/mangohud: true/);
+  await evaluate(`document.querySelector('[data-tab=directories]').click();document.getElementById('add-bind').click();let r=directories[0];r.target.value='/game/companion';r.source.value='/shared/app';document.getElementById('add-overlay').click();r=directories[1];r.target.value='/game/Data';r.write.value='/mods/state';r.addLayer({path:'/mods/first',enabled:true});r.addLayer({path:'/mods/disabled',enabled:false});r.addLayer({path:'/mods/last',enabled:true});r.layers[2].row.querySelector('button').click();mark();document.getElementById('save').click();`);
+  await until(()=>evaluate('document.getElementById("status").textContent.startsWith("Saved.")'),'save virtual directories');
+  assert.equal(await evaluate('directories[0].readOnly.checked'),true);
+  assert.deepEqual(await evaluate('directories[1].layers.map(l=>[l.path.value,l.enabled.checked])'),[['/mods/first',true],['/mods/last',true],['/mods/disabled',false]]);
+  const yaml=await readFile(join(root,'config/demo.yaml'),'utf8');assert.match(yaml,/name: Browser tested/);assert.match(yaml,/mangohud: true/);assert.match(yaml,/type: bind/);assert.match(yaml,/type: overlay/);assert.match(yaml,/enabled: false/);
   await evaluate('document.querySelector("[data-tab=yaml]").click()');await wait(100);
   await evaluate('document.getElementById("yaml").value="unknown_field: true";document.getElementById("yaml").dispatchEvent(new Event("input",{bubbles:true}));document.getElementById("save").click();');
   await until(()=>evaluate('document.getElementById("status").classList.contains("error")'),'invalid YAML rejection');
   assert.equal(await readFile(join(root,'config/demo.yaml'),'utf8'),yaml);
   await evaluate('dirty=false;document.getElementById("reload").click()');await until(()=>evaluate('document.getElementById("status").textContent.startsWith("Loaded.")'),'reload');
-  await evaluate('document.querySelector("[data-tab=launch]").click()');await wait(100);
+  await evaluate('document.querySelector("[data-tab=directories]").click()');await wait(100);
   const shot=await send('Page.captureScreenshot',{format:'png'});await mkdir('target/qa',{recursive:true});await writeFile('target/qa/editor.png',Buffer.from(shot.data,'base64'));
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});await wait(100);
   assert.equal(await evaluate('document.documentElement.scrollWidth<=window.innerWidth'),true,'mobile layout must fit');
   assert.deepEqual(errors,[],'no browser JavaScript errors');
   await evaluate('document.getElementById("close").click()');await until(()=>gsr.exitCode===0,'editor shutdown');
-  console.log('GUI browser smoke passed: form save, YAML rejection, reload, mobile layout, clean shutdown. Screenshot: target/qa/editor.png');
+  console.log('GUI browser smoke passed: form save, virtual directories/layer ordering, YAML rejection, reload, mobile layout, clean shutdown. Screenshot: target/qa/editor.png');
 } finally {
   if(ws)ws.close();
   for(const child of children){if(child.exitCode===null)child.kill('SIGTERM');}

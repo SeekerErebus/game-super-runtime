@@ -46,3 +46,9 @@ requiring that Rust binary to run inside an older Steam runtime.
 
 The CI workflow checks formatting, lint, tests, release build and staged install.
 No workflow automatically publishes packages or performs privileged installation.
+
+Version 0.2 adds optional `bubblewrap`, `fuse-overlayfs` and `fuse3` packages.
+The Arch recipe declares them as optdepends. Default build/tests do not require
+mount permissions or these tools; explicit virtual-directory tests are described
+in [validation.md](validation.md). Install includes both schemas, the virtual
+filesystem guide, and shared-app/mod-overlay examples.

@@ -1,0 +1,13 @@
+version: 1
+virtual_directories:
+  - type: overlay
+    target: '~/Games/Example/Data'
+    write_dir: '~/Games/ModState/Example/default'
+    layers:
+      - path: '~/Games/Mods/Example/Textures'
+      - path: '~/Games/Mods/Example/Experimental'
+        enabled: false
+      - path: '~/Games/Mods/Example/Patch'
+# Alternatively replace layers with:
+#   manifest: '~/Games/ModProfiles/Example/active.yaml'
+# Format and ordering: docs/virtual-directories.md and docs/layers.schema.json.

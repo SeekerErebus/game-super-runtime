@@ -113,6 +113,14 @@
       "minimum": 0,
       "maximum": 60000,
       "default": 3000
+    },
+    "virtual_directories": {
+      "type": "array",
+      "maxItems": 64,
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/virtualDirectory"
+      }
     }
   },
   "$defs": {
@@ -470,6 +478,11 @@
           "minimum": 1,
           "maximum": 3600000,
           "default": 10000
+        },
+        "host_environment": {
+          "type": "boolean",
+          "default": false,
+          "description": "Restore desktop LD_LIBRARY_PATH and clear LD_PRELOAD; requires host scope."
         }
       },
       "required": [
@@ -518,6 +531,89 @@
               },
               "default": [],
               "maxItems": 0
+            }
+          }
+        }
+      ]
+    },
+    "layer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "virtualDirectory": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "source",
+            "target"
+          ],
+          "properties": {
+            "type": {
+              "const": "bind"
+            },
+            "source": {
+              "type": "string",
+              "minLength": 1
+            },
+            "target": {
+              "type": "string",
+              "minLength": 1
+            },
+            "read_only": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "target",
+            "write_dir"
+          ],
+          "properties": {
+            "type": {
+              "const": "overlay"
+            },
+            "target": {
+              "type": "string",
+              "minLength": 1
+            },
+            "write_dir": {
+              "type": "string",
+              "minLength": 1
+            },
+            "layers": {
+              "type": "array",
+              "maxItems": 128,
+              "items": {
+                "$ref": "#/$defs/layer"
+              }
+            },
+            "manifest": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
             }
           }
         }

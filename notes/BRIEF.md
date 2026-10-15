@@ -56,3 +56,21 @@ lifecycle, extensible launch composition, documentation, and publication packagi
 ## Requirement changes
 
 None yet. Record later changes with a date and the requirement superseded.
+
+## Active extension — 2026-10-15
+
+Full new assignment: [VIRTUAL_DIRECTORIES_BRIEF.md](VIRTUAL_DIRECTORIES_BRIEF.md).
+Supersedes minimal-runtime-dependencies restriction for opt-in virtual directories.
+Plain profiles must retain their existing dependency requirements and behavior.
+
+Milestones:
+1. Investigate and implement private directory mappings and ordered copy-on-write
+   mod overlays, optional dependency diagnostics, external versioned manifests.
+2. Test precedence, persistence, original-file preservation, failure/cleanup and
+   runtime visibility; address supported findings from testing-notes.
+3. Document schema, examples, setup/limits; validate build, GUI and packaging.
+
+Acceptance: reusable prefix application/app-data mappings; runtime-visible mod
+merges with explicit order/enabled flags; compatibility tools can emit manifests;
+original files preserved; optional tools checked only when used; actionable errors;
+no edits to live game profiles or installations; clear real versus simulated tests.

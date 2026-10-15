@@ -9,6 +9,9 @@ license=('MIT')
 depends=('glibc' 'gcc-libs' 'bash' 'coreutils')
 makedepends=('rust' 'cargo')
 optdepends=(
+  'bubblewrap: private virtual directory views'
+  'fuse-overlayfs: ordered mod directory overlays'
+  'fuse3: overlay mount lifecycle'
   'xdg-utils: open the browser or desktop text editor'
   'gamemode: performance mode integration'
   'mangohud: performance overlay'

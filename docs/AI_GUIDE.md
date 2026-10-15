@@ -76,3 +76,22 @@ also return 124/125; consult logs). Read the printed log and original child stde
 Do not recommend prefix deletion, Steam env removal, runtime removal, Proton
 replacement, anti-cheat bypass or global wineserver kills as generic fixes.
 Configuration scripts are user code and must be reviewed like shell scripts.
+
+## Virtual directory profiles
+
+Read [virtual-directories.md](virtual-directories.md) before configuring shared
+prefix folders or mods. Use existing, narrow directory targets; never migrate or
+replace entire prefixes. Bind defaults to read-only; writable binds update the
+shared source. Overlays merge enabled layers in low-to-high order and preserve
+writes separately. Use a dedicated write_dir. Export external manifest v1 for
+future mod-manager adapters; its paths are literal and relative to the manifest.
+No automatic registry or MO2/Vortex integration is implied. Plain YAML keeps its
+original dependency footprint. Doctor checks tools/paths but does not test mounts.
+
+Use `host_environment: true` on host desktop companions that need system library
+paths instead of Steam's pinned libraries. This is opt-in and does not change the
+game. For non-Steam Proton variants that require UMU context, inspect the installed
+build's requirements: the playtest used `UMU_ID: umu-default` and explicit
+`STEAM_COMPAT_INSTALL_PATH`. An intervening Faugus update prevents attributing its
+successful launch solely to those values. GSR does not provision or update UMU,
+Proton or runtime dependencies, and does not inject those build-specific settings.

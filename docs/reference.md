@@ -46,6 +46,7 @@ profiles and allow malformed existing files to be repaired.
 | `scripts` | map of objects | Named explicit Bash programs |
 | `before`, `after` | action arrays | Ordered blocking hooks |
 | `companions` | companion array | Managed concurrent programs |
+| `virtual_directories` | mapping array | Private shared folders and ordered mod overlays |
 | `shutdown_timeout_ms` | integer `3000` | TERM-to-KILL grace, 0–60000 milliseconds |
 
 Names in env/variables match `[A-Za-z_][A-Za-z0-9_]*`; `GSR_` is reserved. Empty
@@ -204,3 +205,21 @@ Integration names were checked against [Proton](https://github.com/ValveSoftware
 [Gamescope](https://github.com/ValveSoftware/gamescope), and
 [vkBasalt](https://github.com/DadSchoorse/vkBasalt). Generic env/argv supports new
 options as those projects evolve.
+
+## Virtual directories
+
+`virtual_directories` is an optional array (default `[]`, at most 64). Each entry
+has `type: bind`, required `source`/`target`, and `read_only` (default true); or
+`type: overlay`, required `target`/`write_dir`, and either `layers` (default `[]`)
+or `manifest`. Layers contain required `path` and optional `enabled` (default true).
+Later enabled layers win; persistent writes override all layers. Sources and
+targets must exist. `${PREFIX}` is available here after Proton selection.
+
+See [virtual directories](virtual-directories.md) for dependency setup, the external
+manifest contract, complete examples, persistence, lifecycle and limitations.
+
+For native host companions, `host_environment: true` restores `LD_LIBRARY_PATH`
+from the launcher's inherited `SYSTEM_LD_LIBRARY_PATH` (empty if absent) and clears
+`LD_PRELOAD`. It requires `scope: host`; default false preserves old behavior.
+Explicit companion `env` entries override this preset. This fixes desktop programs
+such as Kate failing against Steam's pinned libraries without changing game env.

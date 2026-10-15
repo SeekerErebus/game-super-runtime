@@ -81,3 +81,27 @@ comments); raw YAML saves preserve text. Advanced fields survive form edits.
 
 The token grants access to this user's selected configuration; local code running
 as the same user can already read it. This is not a multi-user network service.
+
+## Optional virtual filesystem layer
+
+`src/virtual_dirs.rs` resolves versioned external manifests, checks canonical
+source/target/storage relationships, and owns the mount-session RAII guard.
+Before any configured wrapper/hook starts, foreground fuse-overlayfs services
+mount merged trees at private session paths. The outer bubblewrap invocation
+binds those trees (or shared source directories) onto existing canonical targets.
+The host target is never mounted over. Pressure-vessel receives explicit target
+exports and inherits this view. Host-scope tasks also see it.
+
+Write storage holds upper/work and a lock across app IDs; the launch guard lives
+until process cleanup finishes. Mount startup is bounded and polled via mountinfo;
+unexpected service exit initiates launch shutdown. Setup failure drops the partial
+guard. Cleanup lazily unmounts session paths, stops/reaps services and removes only
+empty mountpoint directories. It never recursively removes a mounted directory.
+Mount services use parent-death signaling; forced kills can still leave stale
+state. See [recovery and limitations](virtual-directories.md).
+
+After the direct child exits, the Rust executor now also gives remaining members
+of its launch process group TERM plus the configured grace, then KILL. This covers
+the surviving same-group reaper observed in playtesting, without globally killing
+Wine or changing detached-daemon ownership. Native host companions can opt into a
+restored desktop library environment with `host_environment: true`.

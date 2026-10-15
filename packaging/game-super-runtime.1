@@ -1,4 +1,4 @@
-.TH GAME-SUPER-RUNTIME 1 "October 2026" "0.1.0" "User Commands"
+.TH GAME-SUPER-RUNTIME 1 "October 2026" "0.2.0" "User Commands"
 .SH NAME
 game-super-runtime \- configurable Linux game launch orchestration
 .SH SYNOPSIS
@@ -53,5 +53,9 @@ and interruptions 128 plus the signal number.
 Commands are argv arrays, not shell strings. Bash scripts are explicit trusted
 user code. Companion commands must stay in the foreground for group cleanup.
 Proton prefixes are compatdata directories containing pfx.
+.PP
+Virtual directories optionally use bubblewrap and fuse-overlayfs to share folders
+and merge mod layers. Targets must exist; original target files remain on disk.
+See docs/virtual-directories.md for setup, manifests and persistence.
 .SH SEE ALSO
 .I /usr/share/doc/game-super-runtime/docs/reference.md
