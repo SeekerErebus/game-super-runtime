@@ -1,0 +1,28 @@
+# Runnable demonstration; copy to a temporary config directory first.
+version: 1
+name: Script and companion demonstration
+command: [/bin/sleep, '1']
+variables:
+  READY: '${CONFIG_DIR}/demo.ready'
+scripts:
+  prepare:
+    body: |
+      rm -f -- "$GSR_VAR_READY"
+  helper:
+    body: |
+      printf 'Ready for %s\n' "$GSR_APP_ID" > "$GSR_VAR_READY"
+      trap 'exit 0' TERM INT
+      while :; do sleep 1; done
+  cleanup:
+    body: |
+      printf 'Game result: %s\n' "$GSR_EXIT_CODE"
+      rm -f -- "$GSR_VAR_READY"
+before:
+  - script: prepare
+companions:
+  - name: Ready helper
+    script: helper
+    ready_file: '${vars.READY}'
+    required: true
+after:
+  - script: cleanup

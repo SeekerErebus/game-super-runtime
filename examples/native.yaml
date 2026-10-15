@@ -1,0 +1,9 @@
+version: 1
+name: Native game
+command: ['${HOME}/Games/My Game/game', '--fullscreen']
+working_dir: '${HOME}/Games/My Game'
+env:
+  SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS: '0'
+overlays:
+  gamescope: ['-W', '1920', '-H', '1080', '-f']
+  gamemode: true

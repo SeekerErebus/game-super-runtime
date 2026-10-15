@@ -1,0 +1,16 @@
+version: 1
+name: Standalone Windows game
+command: ['${HOME}/Games/Example/Game.exe', '-fullscreen']
+working_dir: '${HOME}/Games/Example'
+proton:
+  path: '${HOME}/.steam/root/steamapps/common/Proton - Experimental/proton'
+  prefix: '${HOME}/Games/prefixes/example'
+  steam_root: '${HOME}/.steam/root'
+  verb: run
+runtime:
+  mode: required
+  command:
+    - '${HOME}/.steam/root/steamapps/common/SteamLinuxRuntime_sniper/_v2-entry-point'
+    - --verb=run
+    - --
+# Pick a runtime compatible with your chosen Proton build.

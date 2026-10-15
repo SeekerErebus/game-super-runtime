@@ -1,0 +1,57 @@
+.TH GAME-SUPER-RUNTIME 1 "October 2026" "0.1.0" "User Commands"
+.SH NAME
+game-super-runtime \- configurable Linux game launch orchestration
+.SH SYNOPSIS
+.B game-super-runtime
+.RI [ --config-dir " DIR] APP-ID [OPTIONS] [--] [COMMAND ...]"
+.SH DESCRIPTION
+Launch a native or Steam game using APP-ID.yaml. A supplied command takes
+precedence over the profile's command. Steam launch options normally contain
+.B game-super-runtime APP-ID %command%.
+Missing profiles are copied from defaults.yaml or created with empty settings.
+.SH OPTIONS
+.TP
+.B --edit
+Create/open the profile in VISUAL, EDITOR or the default text editor.
+.TP
+.B --edit-gui
+Open the local browser configuration editor.
+.TP
+.B --no-open
+Print the GUI URL without opening a browser.
+.TP
+.B --validate
+Validate configuration without running commands.
+.TP
+.B --dry-run
+Print a JSON launch plan. This may expose configured private environment values.
+.TP
+.B --doctor
+Validate the plan and check host executables.
+.TP
+.B --config-path
+Print the profile path.
+.TP
+.B --logs
+Print the app's log directory.
+.TP
+.B --list
+List configured app IDs (global option).
+.TP
+.B --edit-defaults, --edit-defaults-gui
+Edit the creation template for future profiles (global options).
+.SH FILES
+.I ~/.config/game-super-runtime/APP-ID.yaml
+and
+.I ~/.config/game-super-runtime/defaults.yaml
+hold configuration. XDG_CONFIG_HOME, GSR_CONFIG_DIR and --config-dir override
+the directory. Logs use XDG_STATE_HOME, falling back to ~/.local/state.
+.SH EXIT STATUS
+Child exit status is preserved. Launcher failures use 125, hook timeouts 124,
+and interruptions 128 plus the signal number.
+.SH NOTES
+Commands are argv arrays, not shell strings. Bash scripts are explicit trusted
+user code. Companion commands must stay in the foreground for group cleanup.
+Proton prefixes are compatdata directories containing pfx.
+.SH SEE ALSO
+.I /usr/share/doc/game-super-runtime/docs/reference.md

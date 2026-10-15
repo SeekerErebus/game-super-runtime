@@ -1,0 +1,527 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Game Super Runtime v1",
+  "description": "Editor assistance; run game-super-runtime APP-ID --validate for semantic checks.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": 1,
+      "default": 1
+    },
+    "name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "command": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "working_dir": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "variables": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^(?!GSR_)[A-Za-z_][A-Za-z0-9_]*$"
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "env": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^(?!GSR_)[A-Za-z_][A-Za-z0-9_]*$"
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "unset_env": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "wrappers": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "default": [],
+        "minItems": 1
+      }
+    },
+    "game_wrappers": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "default": [],
+        "minItems": 1
+      }
+    },
+    "overlays": {
+      "$ref": "#/$defs/overlays"
+    },
+    "proton": {
+      "$ref": "#/$defs/proton"
+    },
+    "runtime": {
+      "$ref": "#/$defs/runtime"
+    },
+    "scripts": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/script"
+      }
+    },
+    "before": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/action"
+      }
+    },
+    "after": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/action"
+      }
+    },
+    "companions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/companion"
+      }
+    },
+    "shutdown_timeout_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 60000,
+      "default": 3000
+    }
+  },
+  "$defs": {
+    "overlays": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "gamemode": {
+          "type": "boolean",
+          "default": false
+        },
+        "mangohud": {
+          "type": "boolean",
+          "default": false
+        },
+        "mangohud_config": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "gamescope": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "vkbasalt": {
+          "type": "boolean",
+          "default": false
+        },
+        "vkbasalt_config": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "dxvk_hud": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "proton": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "path": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "prefix": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "steam_root": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "verb": {
+              "enum": [
+                null,
+                "run",
+                "waitforexitandrun",
+                "runinprefix"
+              ]
+            },
+            "env": {
+              "type": "object",
+              "propertyNames": {
+                "pattern": "^(?!GSR_)[A-Za-z_][A-Za-z0-9_]*$"
+              },
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "enum": [
+            "auto",
+            "required",
+            "none"
+          ],
+          "default": "auto"
+        },
+        "command": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        }
+      }
+    },
+    "script": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "body": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "body"
+          ],
+          "properties": {
+            "body": {
+              "type": "string",
+              "minLength": 1
+            },
+            "path": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "body": {
+              "type": "null"
+            }
+          }
+        }
+      ]
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "command": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "script": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "env": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^(?!GSR_)[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "working_dir": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "scope": {
+          "enum": [
+            "host",
+            "game"
+          ],
+          "default": "game"
+        },
+        "allow_failure": {
+          "type": "boolean",
+          "default": false
+        },
+        "timeout_ms": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 86400000
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "command"
+          ],
+          "properties": {
+            "command": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [],
+              "minItems": 1
+            },
+            "script": {
+              "type": "null"
+            },
+            "args": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [],
+              "maxItems": 0
+            }
+          }
+        },
+        {
+          "required": [
+            "script"
+          ],
+          "properties": {
+            "script": {
+              "type": "string",
+              "minLength": 1
+            },
+            "command": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [],
+              "maxItems": 0
+            }
+          }
+        }
+      ]
+    },
+    "companion": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "command": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "script": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "env": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^(?!GSR_)[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "working_dir": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "scope": {
+          "enum": [
+            "host",
+            "game"
+          ],
+          "default": "game"
+        },
+        "proton": {
+          "type": "boolean",
+          "default": false
+        },
+        "required": {
+          "type": "boolean",
+          "default": false
+        },
+        "start_delay_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3600000,
+          "default": 0
+        },
+        "start_after_game": {
+          "type": "boolean",
+          "default": false
+        },
+        "ready_file": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ready_timeout_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600000,
+          "default": 10000
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "oneOf": [
+        {
+          "required": [
+            "command"
+          ],
+          "properties": {
+            "command": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [],
+              "minItems": 1
+            },
+            "script": {
+              "type": "null"
+            },
+            "args": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [],
+              "maxItems": 0
+            }
+          }
+        },
+        {
+          "required": [
+            "script"
+          ],
+          "properties": {
+            "script": {
+              "type": "string",
+              "minLength": 1
+            },
+            "command": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [],
+              "maxItems": 0
+            }
+          }
+        }
+      ]
+    }
+  }
+}

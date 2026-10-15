@@ -1,0 +1,10 @@
+version: 1
+# These are examples of arbitrary installed tools; enable only what you use.
+wrappers:
+  - [game-performance]
+  - [gamescope, '-W', '1920', '-H', '1080', '--']
+  - [mangohud, --dlsym]
+env:
+  DXVK_HUD: fps,devinfo
+  ENABLE_VKBASALT: '1'
+# Explicit wrapper order replaces reliance on convenience switch ordering.

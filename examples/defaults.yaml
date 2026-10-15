@@ -1,0 +1,6 @@
+# Copy to ~/.config/game-super-runtime/defaults.yaml after installing these tools.
+version: 1
+overlays:
+  gamemode: true
+  mangohud: true
+  mangohud_config: fps,frametime,gpu_temp,cpu_temp

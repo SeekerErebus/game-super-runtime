@@ -1,0 +1,23 @@
+# Steam: game-super-runtime 1091500 %command%
+# Replace the tool path with your installed Proton edition; omit it to use Steam's.
+version: 1
+name: Cyberpunk 2077
+proton:
+  path: '${HOME}/.steam/root/compatibilitytools.d/GE-Proton-your-version/proton'
+  env:
+    PROTON_LOG: '1'
+overlays:
+  gamemode: true
+  mangohud: true
+companions:
+  - name: Cheat Engine
+    command: ['${HOME}/Tools/Cheat Engine/Cheat Engine.exe']
+    proton: true
+    scope: game
+    required: false
+    start_after_game: true
+    start_delay_ms: 3000
+# Steam supplies its existing compatdata path. To use another:
+# proton:
+#   prefix: '${HOME}/Games/prefixes/cyberpunk'
+# Do not duplicate the proton key; add prefix under the existing object.
